@@ -14,6 +14,9 @@ public class Main extends JFrame {
     public List<Cita> citas;
     public List<Cita> citasPagadas = new ArrayList<>();
 
+    // Nuevo panel de login
+    public LoginPanel loginPanel;
+
     HomePanel homePanel;
     public PropietariosPanel propietariosPanel;
     public MascotasPanel mascotasPanel;
@@ -34,6 +37,9 @@ public class Main extends JFrame {
 
         cargarDatosIniciales();
 
+        // Inicializar LoginPanel como primer panel
+        loginPanel = new LoginPanel(this);
+
         homePanel = new HomePanel(this);
         propietariosPanel = new PropietariosPanel(this);
         mascotasPanel = new MascotasPanel(this);
@@ -42,6 +48,7 @@ public class Main extends JFrame {
         pagosPanel = new PagosPanel(this, citasPagadas);
         pagoPanel = new PagoPanel(this);
 
+        mainPanel.add(loginPanel, "login");
         mainPanel.add(homePanel, "home");
         mainPanel.add(propietariosPanel, "propietarios");
         mainPanel.add(mascotasPanel, "mascotas");
@@ -51,7 +58,7 @@ public class Main extends JFrame {
         mainPanel.add(pagoPanel, "pago");
 
         add(mainPanel);
-        cardLayout.show(mainPanel, "home");
+        cardLayout.show(mainPanel, "login");
     }
 
     private void cargarDatosIniciales() {
