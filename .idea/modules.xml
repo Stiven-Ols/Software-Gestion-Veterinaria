@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Software Veterinaria.iml" filepath="$PROJECT_DIR$/Software Veterinaria.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Proyecto-Universidad-Graddle.iml" filepath="$PROJECT_DIR$/Proyecto-Universidad-Graddle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Proyecto-Universidad-Graddle.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Proyecto-Universidad-Graddle.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Proyecto-Universidad-Graddle.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Proyecto-Universidad-Graddle.test.iml" />
     </modules>
   </component>
 </project>

@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: bouncycastle:bcmail-jdk14:138" type="java-imported" external-system-id="GRADLE">
+    <properties groupId="bouncycastle" artifactId="bcmail-jdk14" version="138" baseVersion="138" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/bouncycastle/bcmail-jdk14/138/14ff2dfec8578f5f6838c4d6a77a86789afe5382/bcmail-jdk14-138.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
