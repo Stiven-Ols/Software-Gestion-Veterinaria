@@ -1,0 +1,31 @@
+name: Java CI with Gradle
+
+# Disparadores: se ejecuta en cada push a la rama main/master o en Pull Requests
+on:
+  push:
+    branches: [ main ] # Ajusta a tu rama principal
+  pull_request:
+    branches: [ main ] # Ajusta a tu rama principal
+
+jobs:
+  build_and_test: # Nombre del job
+    runs-on: ubuntu-latest # Máquina virtual donde se ejecutará
+
+    steps:
+      - name: Checkout repository # Paso 1: Descarga tu código del repo
+        uses: actions/checkout@v4 # Usa la acción oficial de GitHub
+
+      - name: Set up JDK 23 # Paso 2: Configura el JDK que usa tu proyecto
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23' # Asegúrate que coincida con tu JDK
+          distribution: 'temurin' # Una distribución popular de OpenJDK
+
+      - name: Grant execute permission for gradlew # Paso 3: Da permisos de ejecución al wrapper de Gradle
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle # Paso 4: Compila el proyecto
+        run: ./gradlew build -x test # Construye pero salta las pruebas aquí (las corremos después)
+
+      - name: Test with Gradle # Paso 5: Ejecuta las pruebas unitarias
+        run: ./gradlew test
