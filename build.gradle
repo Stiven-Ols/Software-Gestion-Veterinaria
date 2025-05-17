@@ -1,0 +1,51 @@
+plugins {
+    id 'java' // Plugin para compilar código Java
+    id 'application' // Plugin para crear aplicaciones ejecutables
+}
+
+group = 'com.veterinaria' // El GroupId que elegiste
+version = '1.0-SNAPSHOT' // Versión de tu aplicación
+
+repositories {
+    mavenCentral() // Repositorio estándar para dependencias
+}
+
+dependencies {
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    // Dependencia para SQLite JDBC
+    implementation 'org.xerial:sqlite-jdbc:3.45.1.0' // Versión estable, puedes buscar la última
+
+    // Dependencia para JCalendar
+    implementation 'com.toedter:jcalendar:1.4'
+
+    // Dependencia para iText (versión antigua 2.1.7 que es libre)
+    implementation 'com.lowagie:itext:2.1.7'
+
+    // Dependencias para Pruebas Unitarias con JUnit 5
+    testImplementation platform('org.junit:junit-bom:5.10.0') // Bill of Materials para JUnit
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+}
+
+application {
+    // Define la clase principal que contiene el método main()
+    // Cambia 'com.veterinaria.Main' si tu paquete o clase Main se llaman diferente
+    mainClass = 'com.veterinaria.Main'
+}
+
+// Configuración para las pruebas unitarias
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed" // Muestra el resultado de las pruebas en la consola
+    }
+}
+
+// Asegurar que los recursos se incluyan en el JAR (si generas uno)
+sourceSets {
+    main {
+        resources {
+            srcDirs = ["src/main/resources"]
+        }
+    }
+}
