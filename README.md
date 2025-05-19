@@ -108,4 +108,4 @@ Este sistema integral ofrece una amplia gama de funcionalidades para cubrir toda
 
 ---
 
-Desarrollado con ❤️ por Brayan-Ols
+Desarrollado con ❤️ por Stiven-Ols
