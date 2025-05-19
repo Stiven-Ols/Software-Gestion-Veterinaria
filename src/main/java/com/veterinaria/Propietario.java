@@ -6,7 +6,7 @@ public class Propietario extends Persona implements Serializable {
     private String direccion;
     private String correo;
 
-    // Constructor para JavaBean (puede ser necesario para algunas librerías o frameworks)
+    // Constructor para JavaBean
     public Propietario() {
         super("", "", ""); // Llama al constructor de Persona con valores vacíos
     }

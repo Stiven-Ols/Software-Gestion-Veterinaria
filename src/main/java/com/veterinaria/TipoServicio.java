@@ -1,5 +1,7 @@
 package com.veterinaria;
 
+import java.sql.SQLException;
+
 public enum TipoServicio {
     CONSULTA("Consulta General", 60000),
     VACUNACION("Vacunación", 40000),
@@ -7,11 +9,13 @@ public enum TipoServicio {
     URGENCIA("Urgencia Médica", 100000);
 
     private final String descripcion;
-    private int precio; // Hacemos el precio mutable para que el admin lo cambie
+    private final int precioPorDefecto;
+    private int precioActual;
 
     TipoServicio(String descripcion, int precioInicial) {
         this.descripcion = descripcion;
-        this.precio = precioInicial;
+        this.precioPorDefecto = precioInicial;
+        this.precioActual = precioInicial;
     }
 
     public String getDescripcion() {
@@ -19,25 +23,35 @@ public enum TipoServicio {
     }
 
     public int getPrecio() {
-        return precio;
+        return precioActual;
     }
 
-    public void setPrecio(int nuevoPrecio) { // Setter para cambiar el precio
-        this.precio = nuevoPrecio;
+    public int getPrecioPorDefecto() {
+        return precioPorDefecto;
+    }
+
+    void setPrecioInterno(int nuevoPrecio) { // Llamado por Main al cargar desde BD
+        this.precioActual = nuevoPrecio;
+    }
+
+    // Usado por AdminPanel para cambiar precio y persistirlo
+    public void setPrecioConfigurado(int nuevoPrecio) throws SQLException {
+        ConfiguracionPreciosDAO.guardarPrecio(this.name(), nuevoPrecio);
+        this.precioActual = nuevoPrecio;
     }
 
     public static TipoServicio fromString(String text) {
+        if (text == null) return CONSULTA;
         for (TipoServicio b : TipoServicio.values()) {
             if (b.descripcion.equalsIgnoreCase(text) || b.name().equalsIgnoreCase(text)) {
                 return b;
             }
         }
-        // Podrías retornar CONSULTA por defecto o lanzar una excepción si es crítico no encontrarlo
-        return CONSULTA; // Opcional: un valor por defecto
+        return CONSULTA;
     }
 
     @Override
     public String toString() {
-        return descripcion; // Para mostrar en JComboBox
+        return descripcion;
     }
 }

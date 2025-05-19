@@ -43,9 +43,9 @@ public class MascotasPanel extends JPanel {
         });
 
         JButton btnAgregar = new JButton("Nueva Mascota");
-        btnAgregar.setFont(new Font("Arial", Font.BOLD, 13));
+        btnAgregar.setFont(new Font("Arial", Font.PLAIN, 13));
         btnAgregar.setBackground(new Color(60, 140, 200));
-        btnAgregar.setForeground(Color.WHITE);
+        btnAgregar.setForeground(Color.BLACK);
         btnAgregar.addActionListener(e -> dialogoAgregarMascota());
 
         JPanel panelBusquedaBotones = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -210,7 +210,7 @@ public class MascotasPanel extends JPanel {
 
         JPanel panelBotones = new JPanel();
         panelBotones.setOpaque(false);
-        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.Y_AXIS));
+        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.X_AXIS));
         panelBotones.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
         JButton btnHistorial = crearBotonIcono("/Historial.png", "Ver Historial Médico");
@@ -227,7 +227,7 @@ public class MascotasPanel extends JPanel {
         return card;
     }
 
-    // Método utilitario para crear botones con icono (igual que en PropietariosPanel)
+    // Metodo utilitario para crear botones con icono (igual que en PropietariosPanel)
     private JButton crearBotonIcono(String pathIcono, String tooltip) {
         JButton boton = new JButton();
         try {

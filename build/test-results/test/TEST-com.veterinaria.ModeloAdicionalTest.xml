@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.veterinaria.ModeloAdicionalTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2025-05-19T18:54:09" hostname="Macbook-Pro-Stiven.local" time="1.458">
+  <properties/>
+  <testcase name="testValoresTipoServicioEnum()" classname="com.veterinaria.ModeloAdicionalTest" time="0.041"/>
+  <testcase name="testTipoServicioFromString()" classname="com.veterinaria.ModeloAdicionalTest" time="0.002"/>
+  <testcase name="testConstructorMascotaConId()" classname="com.veterinaria.ModeloAdicionalTest" time="0.003"/>
+  <testcase name="testCrearCitaModelo()" classname="com.veterinaria.ModeloAdicionalTest" time="0.028"/>
+  <testcase name="testCambioPrecioTipoServicioEnum()" classname="com.veterinaria.ModeloAdicionalTest" time="1.336"/>
+  <testcase name="testCrearMascotaModelo()" classname="com.veterinaria.ModeloAdicionalTest" time="0.015"/>
+  <testcase name="testCambiarEstadoCitaModelo()" classname="com.veterinaria.ModeloAdicionalTest" time="0.002"/>
+  <testcase name="testCrearVeterinarioModelo()" classname="com.veterinaria.ModeloAdicionalTest" time="0.013"/>
+  <system-out><![CDATA[Conexión SQLite establecida y tablas verificadas.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -41,9 +41,9 @@ public class PropietariosPanel extends JPanel {
         });
 
         JButton btnAgregar = new JButton("Nuevo Propietario");
-        btnAgregar.setFont(new Font("Arial", Font.BOLD, 13));
-        btnAgregar.setBackground(new Color(60, 140, 200));
-        btnAgregar.setForeground(Color.WHITE);
+        btnAgregar.setFont(new Font("Arial", Font.PLAIN, 13));
+        btnAgregar.setBackground(new Color(60, 140, 200, 255));
+        btnAgregar.setForeground(Color.BLACK);
         btnAgregar.addActionListener(e -> dialogoAgregarPropietario());
 
         JPanel panelBusquedaBotones = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0)); // Alineación y espaciado
@@ -124,7 +124,7 @@ public class PropietariosPanel extends JPanel {
             }
 
             Propietario nuevoPropietario = new Propietario(doc, nom, tel, dir, cor);
-            main.agregarPropietario(nuevoPropietario); // Llama al método de Main para agregar y persistir
+            main.agregarPropietario(nuevoPropietario); // Llama al metodo de Main para agregar y persistir
             JOptionPane.showMessageDialog(this, "Propietario '" + nom + "' agregado exitosamente.",
                     "Registro Exitoso", JOptionPane.INFORMATION_MESSAGE);
         }
@@ -202,7 +202,7 @@ public class PropietariosPanel extends JPanel {
         // Panel de botones
         JPanel panelBotones = new JPanel();
         panelBotones.setOpaque(false);
-        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.Y_AXIS)); // Botones en columna
+        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.X_AXIS)); // Botones en columna
         panelBotones.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
 
@@ -220,7 +220,7 @@ public class PropietariosPanel extends JPanel {
         return card;
     }
 
-    // Método utilitario para crear botones con icono
+    // Metodo para crear botones con icono
     private JButton crearBotonIcono(String pathIcono, String tooltip) {
         JButton boton = new JButton();
         try {
@@ -276,7 +276,7 @@ public class PropietariosPanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                main.eliminarPropietario(p); // Llama al método centralizado en Main
+                main.eliminarPropietario(p); // Llama al metodo centralizado en Main
                 JOptionPane.showMessageDialog(this, "Propietario y sus datos asociados eliminados correctamente.",
                         "Eliminación Exitosa", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {

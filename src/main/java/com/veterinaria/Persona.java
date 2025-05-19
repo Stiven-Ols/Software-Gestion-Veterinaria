@@ -43,7 +43,7 @@ public abstract class Persona implements RegistrableEntidad, Serializable {
     }
 
 
-    // Método abstracto que las clases hijas deben implementar
+    // Metodo abstracto que las clases hijas deben implementar
     public abstract String getTipoPersona();
 
     @Override

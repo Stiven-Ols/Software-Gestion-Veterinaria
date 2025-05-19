@@ -20,14 +20,12 @@ import java.io.FileOutputStream; // Para guardar el PDF
 
 public class PagosPanel extends JPanel {
     private Main main;
-    // private List<Cita> citasPagadas; // No necesitamos copia local si accedemos a main.citasPagadas
     private JTextField txtBuscar;
     private JPanel cardsPanel;
     private static final SimpleDateFormat SDF_DISPLAY_CARD_PAGOS = new SimpleDateFormat("dd/MM/yy hh:mm a");
 
     public PagosPanel(Main main, List<Cita> citasPagadasIniciales) { // El constructor recibe la lista de Main
         this.main = main;
-        // this.citasPagadas = citasPagadasIniciales; // No es necesario si siempre usamos main.citasPagadas
 
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(240, 245, 250));
@@ -54,9 +52,9 @@ public class PagosPanel extends JPanel {
         });
 
         JButton btnExportarPdf = new JButton("Exportar a PDF");
-        btnExportarPdf.setFont(new Font("Arial", Font.BOLD, 13));
+        btnExportarPdf.setFont(new Font("Arial", Font.PLAIN, 13));
         btnExportarPdf.setBackground(new Color(60, 140, 200));
-        btnExportarPdf.setForeground(Color.WHITE);
+        btnExportarPdf.setForeground(Color.BLACK);
         btnExportarPdf.addActionListener(e -> exportarCitasAPdf());
 
         JPanel panelBusquedaBotones = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -133,7 +131,7 @@ public class PagosPanel extends JPanel {
         String nombrePropietario = (p != null) ? p.getNombre() : "N/A";
         String nombreMascota = (m != null) ? m.getNombre() : "N/A";
         String motivoDesc = (cita.getMotivo() != null) ? cita.getMotivo().getDescripcion() : "N/A";
-        int precio = CitasPanel.precioPorTipoServicio(cita.getMotivo()); // Usar método estático
+        int precio = CitasPanel.precioPorTipoServicio(cita.getMotivo()); // Usamos un metodo estático
 
         JPanel infoPanel = new JPanel();
         infoPanel.setOpaque(false);
@@ -152,8 +150,7 @@ public class PagosPanel extends JPanel {
         centerAlignInfo.add(infoPanel);
         card.add(centerAlignInfo, BorderLayout.CENTER);
 
-        // Podrías añadir un botón para ver detalle del pago o reimprimir factura si lo necesitas
-        // Por ahora, la card es solo informativa.
+        // una posible futura funcion para añadir un botón para ver detalle del pago o reimprimir factura si se necesita
 
         return card;
     }
@@ -291,7 +288,7 @@ public class PagosPanel extends JPanel {
         }
     }
 
-    // Método utilitario para crear celdas de tabla con estilo
+    // Metodo funcional para crear celdas de tabla con estilo
     private PdfPCell crearCeldaTabla(String texto, com.lowagie.text.Font fuente, int alineacionHorizontal) {
         PdfPCell celda = new PdfPCell(new Phrase(texto, fuente));
         celda.setHorizontalAlignment(alineacionHorizontal);

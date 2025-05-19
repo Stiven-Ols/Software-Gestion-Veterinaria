@@ -5,20 +5,19 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Main extends JFrame {
-    public CardLayout cardLayout; // public para que LoginPanel/otros puedan cambiar de vista
-    public JPanel mainPanel;    // public por la misma razón
+    public CardLayout cardLayout;
+    public JPanel mainPanel;
 
-    // Usar List para las declaraciones, es mejor práctica. Inicializar para evitar NullPointer.
     public List<Propietario> propietarios = new ArrayList<>();
     public List<Mascota> mascotas = new ArrayList<>();
     public List<Veterinario> veterinarios = new ArrayList<>();
-    public List<Cita> citas = new ArrayList<>(); // Citas Pendientes
-    public List<Cita> citasPagadas = new ArrayList<>(); // Citas ya Pagadas
+    public List<Cita> citas = new ArrayList<>();
+    public List<Cita> citasPagadas = new ArrayList<>();
 
-    // Paneles
-    LoginPanel loginPanel; // Panel de Login como primera vista
+    LoginPanel loginPanel;
     HomePanel homePanel;
     public PropietariosPanel propietariosPanel;
     public MascotasPanel mascotasPanel;
@@ -26,87 +25,99 @@ public class Main extends JFrame {
     public CitasPanel citasPanel;
     public PagosPanel pagosPanel;
     public PagoPanel pagoPanel;
+    AdminPanel adminPanel;
 
-    // private boolean esAdmin = false; // Para controlar el acceso de administrador
+    private boolean esAdmin = false;
+    // private static final SimpleDateFormat DEBUG_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Depuración
+
 
     public Main() {
         setTitle("Sistema de Gestión Veterinaria Profesional");
-        // Tamaño un poco más grande para acomodar mejor los paneles
-        setSize(950, 600); // Ajusta según tus preferencias
-        setLocationRelativeTo(null); // Centrar en pantalla
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Cerrar la aplicación al cerrar la ventana
-        // setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Para manejar el cierre manualmente si es necesario (ej. guardar datos)
-        // addWindowListener(new java.awt.event.WindowAdapter() {
-        //     @Override
-        //     public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-        //         Database.cerrarConexion(); // Buena práctica cerrar la conexión
-        //         System.exit(0);
-        //     }
-        // });
-        setResizable(true); // Permitir redimensionar, o false si prefieres tamaño fijo
+        setSize(1000, 700);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(true);
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // Carga inicial de datos desde la base de datos
         cargarDatosInicialesConManejoDeError();
 
-        // Inicialización de los paneles
         loginPanel        = new LoginPanel(this);
         homePanel           = new HomePanel(this);
         propietariosPanel   = new PropietariosPanel(this);
         mascotasPanel       = new MascotasPanel(this);
         veterinariosPanel   = new VeterinariosPanel(this);
         citasPanel          = new CitasPanel(this);
-        pagosPanel          = new PagosPanel(this, this.citasPagadas); // Pasa la lista de citas pagadas
+        pagosPanel          = new PagosPanel(this, this.citasPagadas);
         pagoPanel           = new PagoPanel(this);
+        adminPanel          = new AdminPanel(this);
 
-        // Añadir paneles al CardLayout con nombres descriptivos
         mainPanel.add(loginPanel, "login");
         mainPanel.add(homePanel, "home");
         mainPanel.add(propietariosPanel, "propietarios");
         mainPanel.add(mascotasPanel, "mascotas");
         mainPanel.add(veterinariosPanel, "veterinarios");
         mainPanel.add(citasPanel, "citas");
-        mainPanel.add(pagosPanel, "historialPagos"); // Nombre más descriptivo
-        mainPanel.add(pagoPanel, "procesarPago");   // Nombre más descriptivo
+        mainPanel.add(pagosPanel, "historialPagos");
+        mainPanel.add(pagoPanel, "procesarPago");
+        mainPanel.add(adminPanel, "adminPanel");
 
-        add(mainPanel); // Añadir el panel principal al JFrame
-        cardLayout.show(mainPanel, "login"); // Iniciar en la pantalla de login
+        add(mainPanel);
+        cardLayout.show(mainPanel, "login");
+    }
+
+    public void setEsAdmin(boolean esAdmin) {
+        this.esAdmin = esAdmin;
+    }
+    public boolean isEsAdmin() {
+        return esAdmin;
     }
 
     private void cargarDatosInicialesConManejoDeError() {
         try {
-            Database.conectar(); // Asegura que la conexión está activa y tablas creadas
+            Database.conectar();
+
+            Map<String, Integer> preciosConfigurados = ConfiguracionPreciosDAO.cargarPrecios();
+            for (TipoServicio servicio : TipoServicio.values()) {
+                if (preciosConfigurados.containsKey(servicio.name())) {
+                    servicio.setPrecioInterno(preciosConfigurados.get(servicio.name()));
+                } else {
+                    ConfiguracionPreciosDAO.guardarPrecio(servicio.name(), servicio.getPrecioPorDefecto());
+                }
+            }
+            // System.out.println("Precios de servicios cargados/verificados en BD."); // Depuración
+
             propietarios = new ArrayList<>(PropietarioDAO.listarTodos());
             mascotas     = new ArrayList<>(MascotaDAO.listarTodos());
             veterinarios = new ArrayList<>(VeterinarioDAO.listarTodos());
-            List<Cita> todasLasCitas = new ArrayList<>(CitaDAO.listarTodos());
+            List<Cita> todasLasCitasBD = new ArrayList<>(CitaDAO.listarTodos());
 
-            // Limpiar y rellenar listas de citas pendientes y pagadas
             citas.clear();
             citasPagadas.clear();
-            for (Cita c : todasLasCitas) {
+            // System.out.println("--- Cargando Citas desde BD en Main ---"); // Depuración
+            for (Cita c : todasLasCitasBD) {
+                // String fechaStr = (c.getFechaHora() != null) ? DEBUG_SDF.format(c.getFechaHora()) : "FECHA_NULA"; // Depuración
+                // String vetDoc = (c.getDocVeterinario() != null && !c.getDocVeterinario().isEmpty()) ? c.getDocVeterinario() : "VET_DOC_NULO_O_VACIO"; // Depuración
+                // System.out.println(String.format("  BD Cita ID: %s, Fecha: %s, DocVet: %s, Estado: %s, Motivo: %s", // Depuración quitada
+                //         c.getId().substring(0,Math.min(8,c.getId().length())), fechaStr, vetDoc, c.getEstado(), (c.getMotivo() != null ? c.getMotivo().name() : "MOTIVO_NULO")));
+
                 if ("PAGADA".equalsIgnoreCase(c.getEstado())) {
                     citasPagadas.add(c);
                 } else {
-                    citas.add(c); // Asumir PENDIENTE o cualquier otro estado no pagado
+                    citas.add(c);
                 }
             }
-            System.out.println("Datos cargados desde la BD. Propietarios: " + propietarios.size() + ", Mascotas: " + mascotas.size() + ", Citas Pendientes: " + citas.size());
+            // System.out.println("--- Fin Carga Citas BD ---"); // Depuración
+            // System.out.println("Datos cargados desde la BD. Propietarios: " + propietarios.size() + ", Mascotas: " + mascotas.size() + ", Citas Pendientes: " + citas.size() + ", Citas Pagadas: " + citasPagadas.size()); // Depuración
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                    "Error Crítico: No se pudieron cargar los datos iniciales desde la base de datos.\n" + e.getMessage() +
-                            "\nLa aplicación podría no funcionar correctamente. Verifique la conexión y el archivo de base de datos.",
+                    "Error Crítico: No se pudieron cargar los datos iniciales.\n" + e.getMessage(),
                     "Error de Carga de Datos", JOptionPane.ERROR_MESSAGE);
-            // Inicializar listas vacías para evitar NullPointerExceptions más adelante
-            propietarios = new ArrayList<>();
-            mascotas = new ArrayList<>();
-            veterinarios = new ArrayList<>();
-            citas = new ArrayList<>();
-            citasPagadas = new ArrayList<>();
-        } catch (Exception e) { // Capturar cualquier otra excepción inesperada
+            propietarios = new ArrayList<>(); mascotas = new ArrayList<>(); veterinarios = new ArrayList<>();
+            citas = new ArrayList<>(); citasPagadas = new ArrayList<>();
+        } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
                     "Error inesperado durante la carga de datos iniciales: " + e.getMessage(),
@@ -114,9 +125,22 @@ public class Main extends JFrame {
         }
     }
 
-    // --- Métodos de Navegación (públicos para ser llamados desde los paneles) ---
-    public void irHome()                 { cardLayout.show(mainPanel, "home"); }
-    public void irLogin()                { cardLayout.show(mainPanel, "login"); } // Para cerrar sesión
+    public void irHome() {
+        irHome(this.esAdmin);
+    }
+
+    public void irHome(boolean configurarHomeComoAdmin) {
+        if (homePanel != null) {
+            homePanel.configurarParaVista(configurarHomeComoAdmin);
+        }
+        cardLayout.show(mainPanel, "home");
+    }
+
+    public void irLogin() {
+        setEsAdmin(false);
+        cardLayout.show(mainPanel, "login");
+    }
+
     public void abrirPanelPropietarios() { if(propietariosPanel!=null) propietariosPanel.actualizarCards(); cardLayout.show(mainPanel, "propietarios"); }
     public void abrirPanelMascotas()     { if(mascotasPanel!=null) mascotasPanel.actualizarCards(); cardLayout.show(mainPanel, "mascotas"); }
     public void abrirPanelVeterinarios() { if(veterinariosPanel!=null) veterinariosPanel.actualizarCards(); cardLayout.show(mainPanel, "veterinarios"); }
@@ -124,22 +148,109 @@ public class Main extends JFrame {
     public void abrirPanelPagos()        { if(pagosPanel!=null) pagosPanel.actualizarCards(this.citasPagadas); cardLayout.show(mainPanel, "historialPagos"); }
     public void abrirPanelPago(Cita cita){ if(pagoPanel!=null) pagoPanel.setCita(cita); cardLayout.show(mainPanel, "procesarPago"); }
 
-    // --- Métodos de Gestión de Datos (interactúan con DAOs y actualizan UI) ---
+    public void abrirAdminPanel() {
+        if (this.esAdmin) {
+            if (adminPanel != null) adminPanel.cargarDatosDashboard();
+            cardLayout.show(mainPanel, "adminPanel");
+        } else {
+            JOptionPane.showMessageDialog(this, "Acceso denegado. Por favor, inicie sesión como administrador.", "Error de Acceso", JOptionPane.ERROR_MESSAGE);
+            irLogin();
+        }
+    }
+
+    public void solicitarPasswordParaAdminPanel() {
+        JPasswordField passwordField = new JPasswordField(15);
+        JPanel panelLoginAdmin = new JPanel(new GridLayout(0,1,5,5));
+        panelLoginAdmin.add(new JLabel("Contraseña de Administrador:"));
+        panelLoginAdmin.add(passwordField);
+        SwingUtilities.invokeLater(passwordField::requestFocusInWindow);
+
+        int option = JOptionPane.showConfirmDialog( this, panelLoginAdmin, "Acceso a Administración",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (option == JOptionPane.OK_OPTION) {
+            String password = new String(passwordField.getPassword());
+            if ("adminAres".equals(password)) {
+                setEsAdmin(true);
+                if (adminPanel != null) adminPanel.cargarDatosDashboard();
+                cardLayout.show(mainPanel, "adminPanel");
+            } else {
+                JOptionPane.showMessageDialog( this, "Contraseña incorrecta.", "Error de Acceso", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public void agregarCita(Cita c) {
+        if (c == null || c.getFechaHora() == null || c.getMotivo() == null) {
+            JOptionPane.showMessageDialog(this, "La cita tiene datos incompletos.", "Error de Validación", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // System.out.println("Main.agregarCita - Recibida para guardar: Cita ID=" + c.getId().substring(0,8) + // Depuración
+        //         ", VetDoc=" + ((c.getDocVeterinario() != null) ? c.getDocVeterinario() : "NULO") +
+        //         ", Fecha=" + ((c.getFechaHora() != null) ? DEBUG_SDF.format(c.getFechaHora()) : "NULA"));
+        try {
+            CitaDAO.guardar(c);
+            citas.add(c);
+            if(citasPanel != null) citasPanel.actualizarCards();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar la cita: " + ex.getMessage(), "Error DB", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    public void marcarCitaComoPagada(Cita cita) {
+        if (cita == null) return;
+
+        // System.out.println("Main.marcarCitaComoPagada - Antes de cambiar estado: Cita ID=" + cita.getId().substring(0,8) + // Depuración
+        //         ", VetDoc=" + ((cita.getDocVeterinario() != null) ? cita.getDocVeterinario() : "NULO") +
+        //         ", Fecha=" + ((cita.getFechaHora() != null) ? DEBUG_SDF.format(cita.getFechaHora()) : "NULA") +
+        //         ", Motivo=" + ((cita.getMotivo() != null) ? cita.getMotivo().name() : "NULO") +
+        //         ", EstadoActual=" + cita.getEstado());
+
+        cita.setEstado("PAGADA");
+        try {
+            CitaDAO.guardar(cita);
+
+            // System.out.println("Main.marcarCitaComoPagada - DESPUÉS de guardar en BD: Cita ID=" + cita.getId().substring(0,8) + // Depuración
+            //         ", VetDoc=" + ((cita.getDocVeterinario() != null) ? cita.getDocVeterinario() : "NULO") +
+            //         ", Estado nuevo=" + cita.getEstado());
+
+            boolean fueRemovida = citas.remove(cita);
+            // System.out.println("  Removida de lista 'citas' (pendientes)? " + fueRemovida); // Depuración
+
+            if (!citasPagadas.stream().anyMatch(cp -> cp.getId().equals(cita.getId()))) {
+                citasPagadas.add(cita);
+                // System.out.println("  Añadida a lista 'citasPagadas'. Tamaño actual: " + citasPagadas.size()); // Depuración
+            }
+            // else { // Depuración
+            //     System.out.println("  La cita con ID " + cita.getId().substring(0,8) + " ya estaba en 'citasPagadas' o se intentó añadir un duplicado. Verificando instancia...");
+            // }
+
+            if(citasPanel != null) citasPanel.actualizarCards();
+            if(pagosPanel != null) pagosPanel.actualizarCards(this.citasPagadas);
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar el estado de la cita en la BD: " + e.getMessage(), "Error DB", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            cita.setEstado("PENDIENTE");
+            if(!citas.contains(cita)) citas.add(cita);
+            citasPagadas.removeIf(c -> c.getId().equals(cita.getId()));
+        }
+    }
 
     public void agregarPropietario(Propietario p) {
         if (p == null || p.getDocumento() == null || p.getDocumento().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "El documento del propietario no puede estar vacío.", "Error de Validación", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // Evitar duplicados por documento
         if (propietarios.stream().anyMatch(prop -> prop.getDocumento().equals(p.getDocumento()))) {
             JOptionPane.showMessageDialog(this, "Ya existe un propietario con el documento " + p.getDocumento() + ".", "Propietario Duplicado", JOptionPane.ERROR_MESSAGE);
             return;
         }
         try {
             PropietarioDAO.guardar(p);
-            propietarios.add(p); // Añadir a la lista en memoria DESPUÉS de guardar en BD
-            if(propietariosPanel != null) propietariosPanel.actualizarCards(); // Actualizar la vista
+            propietarios.add(p);
+            if(propietariosPanel != null) propietariosPanel.actualizarCards();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al guardar el propietario en la base de datos: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
@@ -151,7 +262,6 @@ public class Main extends JFrame {
             JOptionPane.showMessageDialog(this, "La mascota debe estar asociada a un propietario.", "Error de Validación", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // Verificar que el propietario exista
         if (propietarios.stream().noneMatch(p -> p.getDocumento().equals(m.getPropietarioDocumento()))) {
             JOptionPane.showMessageDialog(this, "El propietario asignado a la mascota no existe.", "Error de Propietario", JOptionPane.ERROR_MESSAGE);
             return;
@@ -160,7 +270,7 @@ public class Main extends JFrame {
             MascotaDAO.guardar(m);
             mascotas.add(m);
             if(mascotasPanel != null) mascotasPanel.actualizarCards();
-            if(propietariosPanel != null) propietariosPanel.actualizarCards(); // Actualizar contador de mascotas en propietario
+            if(propietariosPanel != null) propietariosPanel.actualizarCards();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al guardar la mascota: " + ex.getMessage(), "Error DB", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
@@ -186,33 +296,16 @@ public class Main extends JFrame {
         }
     }
 
-    public void agregarCita(Cita c) {
-        if (c == null || c.getFechaHora() == null || c.getMotivo() == null) {
-            JOptionPane.showMessageDialog(this, "La cita tiene datos incompletos.", "Error de Validación", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        try {
-            CitaDAO.guardar(c);
-            citas.add(c); // Añadir a la lista de citas pendientes
-            if(citasPanel != null) citasPanel.actualizarCards();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error al guardar la cita: " + ex.getMessage(), "Error DB", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
-        }
-    }
-
-    // --- Métodos de Eliminación Centralizados ---
-    public void eliminarPropietario(Propietario p) throws SQLException { // Propagar SQLException para manejo en panel
+    public void eliminarPropietario(Propietario p) throws SQLException {
         if (p == null) return;
-        // Eliminar mascotas asociadas y sus citas
         List<Mascota> mascotasDelPropietario = new ArrayList<>();
-        for (Mascota m : new ArrayList<>(mascotas)) { // Iterar sobre una copia para evitar ConcurrentModificationException
+        for (Mascota m : new ArrayList<>(mascotas)) {
             if (m.getPropietarioDocumento().equals(p.getDocumento())) {
                 mascotasDelPropietario.add(m);
             }
         }
         for (Mascota m : mascotasDelPropietario) {
-            eliminarMascota(m); // Esto ya maneja las citas de la mascota
+            eliminarMascota(m);
         }
         PropietarioDAO.eliminarPorDocumento(p.getDocumento());
         propietarios.remove(p);
@@ -221,32 +314,30 @@ public class Main extends JFrame {
 
     public void eliminarMascota(Mascota m) throws SQLException {
         if (m == null) return;
-        // Eliminar citas asociadas a la mascota (tanto pendientes como pagadas)
         List<Cita> citasDeLaMascota = new ArrayList<>();
-        for (Cita c : new ArrayList<>(citas)) { // Citas pendientes
+        for (Cita c : new ArrayList<>(citas)) {
             if (c.getIdMascota().equals(m.getId())) citasDeLaMascota.add(c);
         }
-        for (Cita c : new ArrayList<>(citasPagadas)) { // Citas pagadas
+        for (Cita c : new ArrayList<>(citasPagadas)) {
             if (c.getIdMascota().equals(m.getId())) citasDeLaMascota.add(c);
         }
         for (Cita c : citasDeLaMascota) {
-            eliminarCita(c); // Esto borra de BD y de listas en memoria
+            eliminarCita(c);
         }
         MascotaDAO.eliminarPorId(m.getId());
         mascotas.remove(m);
         if(mascotasPanel != null) mascotasPanel.actualizarCards();
-        if(propietariosPanel != null) propietariosPanel.actualizarCards(); // Refrescar contador de mascotas del propietario
+        if(propietariosPanel != null) propietariosPanel.actualizarCards();
     }
 
     public void eliminarVeterinario(Veterinario v) throws SQLException {
         if (v == null) return;
-        // Eliminar citas asociadas al veterinario
         List<Cita> citasDelVeterinario = new ArrayList<>();
         for (Cita c : new ArrayList<>(citas)) {
-            if (c.getDocVeterinario().equals(v.getDocumento())) citasDelVeterinario.add(c);
+            if (c.getDocVeterinario() != null && c.getDocVeterinario().equals(v.getDocumento())) citasDelVeterinario.add(c);
         }
         for (Cita c : new ArrayList<>(citasPagadas)) {
-            if (c.getDocVeterinario().equals(v.getDocumento())) citasDelVeterinario.add(c);
+            if (c.getDocVeterinario() != null && c.getDocVeterinario().equals(v.getDocumento())) citasDelVeterinario.add(c);
         }
         for (Cita c : citasDelVeterinario) {
             eliminarCita(c);
@@ -266,31 +357,8 @@ public class Main extends JFrame {
         if(pagosPanel != null && removidaDePagadas) pagosPanel.actualizarCards(this.citasPagadas);
     }
 
-    // Marcar cita como pagada y moverla de lista
-    public void marcarCitaComoPagada(Cita cita) {
-        if (cita == null) return;
-        cita.setEstado("Pagada");
-        try {
-            CitaDAO.guardar(cita); // Actualizar estado en BD
-            citas.remove(cita); // Quitar de pendientes
-            if (!citasPagadas.contains(cita)) { // Añadir a pagadas si no está ya
-                citasPagadas.add(cita);
-            }
-            if(citasPanel != null) citasPanel.actualizarCards();
-            if(pagosPanel != null) pagosPanel.actualizarCards(this.citasPagadas);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al actualizar el estado de la cita en la base de datos: " + e.getMessage(), "Error DB", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-            // Revertir el cambio en memoria si falla la BD (opcional, depende de la lógica de negocio)
-            // cita.setEstado("PENDIENTE");
-            // citas.add(cita);
-            // citasPagadas.remove(cita);
-        }
-    }
 
-    // Método main para iniciar la aplicación
     public static void main(String[] args) {
-        // Establecer Look and Feel (opcional, para una apariencia más moderna)
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {

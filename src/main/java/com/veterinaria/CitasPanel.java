@@ -1,23 +1,27 @@
+// CitasPanel.java
 package com.veterinaria;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import com.toedter.calendar.JDateChooser; // Asegúrate de tener jcalendar.jar en lib y build.gradle
+import com.toedter.calendar.JDateChooser;
 import java.awt.*;
 import java.net.URL;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.*; // Para Calendar y Date
-import java.util.List; // Usar java.util.List
+import java.util.*;
+import java.util.List;
 
 public class CitasPanel extends JPanel {
     private Main main;
     private JPanel cardsPanel;
     private JTextField txtBuscar;
     private static final SimpleDateFormat SDF_DISPLAY_CARD = new SimpleDateFormat("dd/MM/yy hh:mm a");
+    // private static final SimpleDateFormat DEBUG_FECHA_HORA_FORMAT_CITAS = new SimpleDateFormat("dd/MM/yyyy HH:mm"); // Depuración
+
 
     public CitasPanel(Main main) {
+        // ... (constructor sin cambios) ...
         this.main = main;
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(240, 245, 250));
@@ -44,9 +48,9 @@ public class CitasPanel extends JPanel {
         });
 
         JButton btnAgendar = new JButton("Agendar Nueva Cita");
-        btnAgendar.setFont(new Font("Arial", Font.BOLD, 13));
+        btnAgendar.setFont(new Font("Arial", Font.PLAIN, 13));
         btnAgendar.setBackground(new Color(60, 140, 200));
-        btnAgendar.setForeground(Color.WHITE);
+        btnAgendar.setForeground(Color.BLACK);
         btnAgendar.addActionListener(e -> dialogoAgendarCita());
 
         JPanel panelBusquedaBotones = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -78,11 +82,137 @@ public class CitasPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        actualizarCards(); // Carga inicial de citas pendientes
+        actualizarCards();
+    }
+
+
+    public void dialogoAgendarCita() {
+        if (main.propietarios == null || main.propietarios.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Debe registrar propietarios antes de agendar citas.", "Atención", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (main.veterinarios == null || main.veterinarios.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Debe registrar veterinarios antes de agendar citas.", "Atención", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JComboBox<Propietario> comboPropietario = new JComboBox<>(main.propietarios.toArray(new Propietario[0]));
+        JComboBox<Mascota> comboMascota = new JComboBox<>();
+        JComboBox<Veterinario> comboVeterinario = new JComboBox<>(main.veterinarios.toArray(new Veterinario[0]));
+        JDateChooser dateChooser = new JDateChooser();
+
+        dateChooser.setDate(new Date());
+        dateChooser.setMinSelectableDate(new Date());
+        // System.out.println("CitasPanel - JDateChooser inicializado con: " + (dateChooser.getDate() != null ? DEBUG_FECHA_HORA_FORMAT_CITAS.format(dateChooser.getDate()) : "null")); // Depuración
+
+        String[] horasDisponibles = {
+                "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+                "12:00 PM", "12:30 PM",
+                "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM"
+        };
+        JComboBox<String> comboHora = new JComboBox<>(horasDisponibles);
+        JComboBox<TipoServicio> comboMotivo = new JComboBox<>(TipoServicio.values());
+
+        comboPropietario.addActionListener(e -> {
+            Propietario pSeleccionado = (Propietario) comboPropietario.getSelectedItem();
+            comboMascota.removeAllItems();
+            if (pSeleccionado != null && main.mascotas != null) {
+                for (Mascota m : main.mascotas) {
+                    if (m.getPropietarioDocumento().equals(pSeleccionado.getDocumento())) {
+                        comboMascota.addItem(m);
+                    }
+                }
+            }
+            if (comboMascota.getItemCount() == 0) {
+                comboMascota.addItem(null);
+                comboMascota.setEnabled(false);
+            } else {
+                comboMascota.setEnabled(true);
+            }
+        });
+
+        if (comboPropietario.getItemCount() > 0) {
+            comboPropietario.setSelectedIndex(0);
+        } else {
+            JOptionPane.showMessageDialog(this, "No hay propietarios registrados para seleccionar.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JPanel panelDialogo = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(3, 5, 3, 5);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        panelDialogo.add(new JLabel("Seleccione Propietario:"), gbc); panelDialogo.add(comboPropietario, gbc);
+        panelDialogo.add(new JLabel("Seleccione Mascota:"), gbc); panelDialogo.add(comboMascota, gbc);
+        panelDialogo.add(new JLabel("Seleccione Veterinario:"), gbc); panelDialogo.add(comboVeterinario, gbc);
+        panelDialogo.add(new JLabel("Fecha de la Cita:"), gbc); panelDialogo.add(dateChooser, gbc);
+        panelDialogo.add(new JLabel("Hora de la Cita:"), gbc); panelDialogo.add(comboHora, gbc);
+        panelDialogo.add(new JLabel("Motivo de la Consulta:"), gbc); panelDialogo.add(comboMotivo, gbc);
+
+        int resultado = JOptionPane.showConfirmDialog(this, panelDialogo, "Agendar Nueva Cita",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (resultado == JOptionPane.OK_OPTION) {
+            Propietario propSel = (Propietario) comboPropietario.getSelectedItem();
+            Mascota mascSel = (Mascota) comboMascota.getSelectedItem();
+            Veterinario vetSel = (Veterinario) comboVeterinario.getSelectedItem();
+            Date fechaSel = dateChooser.getDate();
+            String horaSelStr = (String) comboHora.getSelectedItem();
+            TipoServicio motivoSel = (TipoServicio) comboMotivo.getSelectedItem();
+
+            if (propSel == null || mascSel == null || vetSel == null || fechaSel == null || horaSelStr == null || motivoSel == null) {
+                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!vetSel.isDisponibilidad()) {
+                JOptionPane.showMessageDialog(this, "El veterinario " + vetSel.getNombre() + " no está disponible.", "Veterinario No Disponible", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(fechaSel);
+            String[] partesHora = horaSelStr.replace(" AM", "").replace(" PM", "").split(":");
+            int hora = Integer.parseInt(partesHora[0]);
+            int minuto = Integer.parseInt(partesHora[1]);
+            if (horaSelStr.contains("PM") && hora != 12) hora += 12;
+            if (horaSelStr.contains("AM") && hora == 12) hora = 0;
+
+            cal.set(Calendar.HOUR_OF_DAY, hora);
+            cal.set(Calendar.MINUTE, minuto);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date fechaHoraCita = cal.getTime();
+
+            String docVeterinarioParaCita = vetSel.getDocumento();
+            // System.out.println("CitasPanel - Creando cita con DocVeterinario: " + docVeterinarioParaCita + ", FechaHora: " + DEBUG_FECHA_HORA_FORMAT_CITAS.format(fechaHoraCita)); // Depuración
+
+
+            if (main.citas != null) {
+                for (Cita cExistente : main.citas) {
+                    if (cExistente.getDocVeterinario() != null && cExistente.getDocVeterinario().equals(vetSel.getDocumento()) &&
+                            Math.abs(cExistente.getFechaHora().getTime() - fechaHoraCita.getTime()) < (30 * 60 * 1000)) {
+                        JOptionPane.showMessageDialog(this, "El veterinario ya tiene cita cerca de esa hora.", "Conflicto Horario (Veterinario)", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (cExistente.getIdMascota().equals(mascSel.getId()) &&
+                            Math.abs(cExistente.getFechaHora().getTime() - fechaHoraCita.getTime()) < (30 * 60 * 1000)) {
+                        JOptionPane.showMessageDialog(this, "La mascota ya tiene cita cerca de esa hora.", "Conflicto Horario (Mascota)", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                }
+            }
+
+            Cita nuevaCita = new Cita(propSel.getDocumento(), mascSel.getId(), docVeterinarioParaCita, fechaHoraCita, motivoSel, "PENDIENTE");
+            main.agregarCita(nuevaCita);
+            JOptionPane.showMessageDialog(this, "Cita para '" + mascSel.getNombre() + "' agendada.", "Cita Registrada", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     public void actualizarCards() {
-        actualizarCards(main.citas); // Mostrar solo citas pendientes por defecto
+        actualizarCards(main.citas);
     }
 
     public void actualizarCards(List<Cita> listaAMostrar) {
@@ -93,11 +223,9 @@ public class CitasPanel extends JPanel {
             cardsPanel.setLayout(new BorderLayout());
             cardsPanel.add(lblVacio, BorderLayout.CENTER);
         } else {
-            // Ordenar por fecha, las más próximas primero
             listaAMostrar.sort(Comparator.comparing(Cita::getFechaHora));
             cardsPanel.setLayout(new GridLayout(0, 2, 15, 15));
             for (Cita cita : listaAMostrar) {
-                // Solo mostrar citas pendientes en este panel
                 if ("PENDIENTE".equalsIgnoreCase(cita.getEstado())) {
                     cardsPanel.add(crearCardCita(cita));
                 }
@@ -108,25 +236,23 @@ public class CitasPanel extends JPanel {
     }
 
     private JPanel crearCardCita(Cita cita) {
-        JPanel card = new JPanel(new BorderLayout(10, 10)); // Espaciado interno
-        card.setPreferredSize(new Dimension(380, 170)); // Altura para mostrar más info
+        JPanel card = new JPanel(new BorderLayout(10, 10));
+        card.setPreferredSize(new Dimension(380, 170));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 210, 225), 1),
                 BorderFactory.createEmptyBorder(12, 15, 12, 15)
         ));
 
-        // Avatar
         JLabel lblAvatar = new JLabel("", SwingConstants.CENTER);
         lblAvatar.setPreferredSize(new Dimension(72, 72));
         try {
-            URL imgUrl = getClass().getResource("/Cita.png"); // Imagen para cita
+            URL imgUrl = getClass().getResource("/Cita.png");
             if (imgUrl != null) lblAvatar.setIcon(new ImageIcon(imgUrl));
             else lblAvatar.setText("Cita");
         } catch (Exception e) { lblAvatar.setText("Err");}
         card.add(lblAvatar, BorderLayout.WEST);
 
-        // Panel de Información
         JPanel infoPanel = new JPanel();
         infoPanel.setOpaque(false);
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
@@ -152,14 +278,13 @@ public class CitasPanel extends JPanel {
         centerAlignInfo.add(infoPanel);
         card.add(centerAlignInfo, BorderLayout.CENTER);
 
-        // Panel de Botones
         JPanel panelBotones = new JPanel();
         panelBotones.setOpaque(false);
-        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.Y_AXIS));
+        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.X_AXIS));
         panelBotones.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
         JButton btnCheck = crearBotonIcono("/Check.png", "Marcar como Atendida e Ir a Pagar");
-        btnCheck.addActionListener(e -> main.abrirPanelPago(cita)); // Lleva al panel de pago
+        btnCheck.addActionListener(e -> main.abrirPanelPago(cita));
 
         JButton btnEliminar = crearBotonIcono("/trash.png", "Eliminar Cita");
         btnEliminar.addActionListener(e -> eliminarCita(cita));
@@ -172,7 +297,6 @@ public class CitasPanel extends JPanel {
         return card;
     }
 
-    // Método utilitario para crear botones con icono (igual que en otros paneles)
     private JButton crearBotonIcono(String pathIcono, String tooltip) {
         JButton boton = new JButton();
         try {
@@ -201,7 +325,7 @@ public class CitasPanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                main.eliminarCita(cita); // Llama al método centralizado en Main
+                main.eliminarCita(cita);
                 JOptionPane.showMessageDialog(this, "Cita eliminada correctamente.",
                         "Eliminación Exitosa", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
@@ -211,147 +335,13 @@ public class CitasPanel extends JPanel {
             }
         }
     }
-
-    public void dialogoAgendarCita() {
-        if (main.propietarios == null || main.propietarios.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Debe registrar propietarios antes de agendar citas.", "Atención", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (main.veterinarios == null || main.veterinarios.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Debe registrar veterinarios antes de agendar citas.", "Atención", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        JComboBox<Propietario> comboPropietario = new JComboBox<>(main.propietarios.toArray(new Propietario[0]));
-        JComboBox<Mascota> comboMascota = new JComboBox<>(); // Se llenará dinámicamente
-        JComboBox<Veterinario> comboVeterinario = new JComboBox<>(main.veterinarios.toArray(new Veterinario[0]));
-        JDateChooser dateChooser = new JDateChooser();
-        dateChooser.setMinSelectableDate(new Date()); // No permitir fechas pasadas
-        dateChooser.setDate(new Date()); // Fecha actual por defecto
-
-        String[] horasDisponibles = {
-                "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-                "12:00 PM", "12:30 PM",
-                "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM"
-                // Ajusta según horario laboral, puedes hacerlo más dinámico después
-        };
-        JComboBox<String> comboHora = new JComboBox<>(horasDisponibles);
-        JComboBox<TipoServicio> comboMotivo = new JComboBox<>(TipoServicio.values()); // Usa el Enum
-
-        // Lógica para llenar el combo de mascotas según el propietario seleccionado
-        comboPropietario.addActionListener(e -> {
-            Propietario pSeleccionado = (Propietario) comboPropietario.getSelectedItem();
-            comboMascota.removeAllItems();
-            if (pSeleccionado != null && main.mascotas != null) {
-                for (Mascota m : main.mascotas) {
-                    if (m.getPropietarioDocumento().equals(pSeleccionado.getDocumento())) {
-                        comboMascota.addItem(m);
-                    }
-                }
-            }
-            if (comboMascota.getItemCount() == 0) {
-                comboMascota.addItem(null); // Para evitar error si no hay mascotas, aunque idealmente se valida antes
-                comboMascota.setEnabled(false);
-            } else {
-                comboMascota.setEnabled(true);
-            }
-        });
-
-        // Forzar la carga inicial de mascotas para el primer propietario
-        if (comboPropietario.getItemCount() > 0) {
-            comboPropietario.setSelectedIndex(0); // Esto dispara el ActionListener
-        } else {
-            // No hay propietarios, el diálogo no debería continuar
-            JOptionPane.showMessageDialog(this, "No hay propietarios registrados para seleccionar.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-
-        JPanel panelDialogo = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(3, 5, 3, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        panelDialogo.add(new JLabel("Seleccione Propietario:"), gbc); panelDialogo.add(comboPropietario, gbc);
-        panelDialogo.add(new JLabel("Seleccione Mascota:"), gbc); panelDialogo.add(comboMascota, gbc);
-        panelDialogo.add(new JLabel("Seleccione Veterinario:"), gbc); panelDialogo.add(comboVeterinario, gbc);
-        panelDialogo.add(new JLabel("Fecha de la Cita:"), gbc); panelDialogo.add(dateChooser, gbc);
-        panelDialogo.add(new JLabel("Hora de la Cita:"), gbc); panelDialogo.add(comboHora, gbc);
-        panelDialogo.add(new JLabel("Motivo de la Consulta:"), gbc); panelDialogo.add(comboMotivo, gbc);
-
-        int resultado = JOptionPane.showConfirmDialog(this, panelDialogo, "Agendar Nueva Cita",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-        if (resultado == JOptionPane.OK_OPTION) {
-            Propietario propSel = (Propietario) comboPropietario.getSelectedItem();
-            Mascota mascSel = (Mascota) comboMascota.getSelectedItem();
-            Veterinario vetSel = (Veterinario) comboVeterinario.getSelectedItem();
-            Date fechaSel = dateChooser.getDate();
-            String horaSelStr = (String) comboHora.getSelectedItem();
-            TipoServicio motivoSel = (TipoServicio) comboMotivo.getSelectedItem();
-
-            if (propSel == null || mascSel == null || vetSel == null || fechaSel == null || horaSelStr == null || motivoSel == null) {
-                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios para agendar la cita.",
-                        "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (!vetSel.isDisponibilidad()) {
-                JOptionPane.showMessageDialog(this, "El veterinario " + vetSel.getNombre() + " no está disponible en este momento.",
-                        "Veterinario No Disponible", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(fechaSel); // Fecha del JDateChooser
-
-            // Parsear hora del JComboBox (ej: "09:30 AM")
-            String[] partesHora = horaSelStr.replace(" AM", "").replace(" PM", "").split(":");
-            int hora = Integer.parseInt(partesHora[0]);
-            int minuto = Integer.parseInt(partesHora[1]);
-            if (horaSelStr.contains("PM") && hora != 12) hora += 12;
-            if (horaSelStr.contains("AM") && hora == 12) hora = 0; // Medianoche
-
-            cal.set(Calendar.HOUR_OF_DAY, hora);
-            cal.set(Calendar.MINUTE, minuto);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            Date fechaHoraCita = cal.getTime();
-
-            // Validaciones de horario y duplicados
-            if (main.citas != null) {
-                for (Cita cExistente : main.citas) {
-                    if (cExistente.getDocVeterinario().equals(vetSel.getDocumento()) &&
-                            Math.abs(cExistente.getFechaHora().getTime() - fechaHoraCita.getTime()) < (30 * 60 * 1000)) { // Menos de 30 min de diferencia
-                        JOptionPane.showMessageDialog(this, "El veterinario ya tiene una cita programada muy cerca de esa hora.",
-                                "Conflicto de Horario (Veterinario)", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                    if (cExistente.getIdMascota().equals(mascSel.getId()) &&
-                            Math.abs(cExistente.getFechaHora().getTime() - fechaHoraCita.getTime()) < (30 * 60 * 1000)) {
-                        JOptionPane.showMessageDialog(this, "La mascota ya tiene una cita programada muy cerca de esa hora.",
-                                "Conflicto de Horario (Mascota)", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                }
-            }
-
-            Cita nuevaCita = new Cita(propSel.getDocumento(), mascSel.getId(), vetSel.getDocumento(), fechaHoraCita, motivoSel, "PENDIENTE");
-            main.agregarCita(nuevaCita);
-            JOptionPane.showMessageDialog(this, "Cita para '" + mascSel.getNombre() + "' agendada exitosamente.",
-                    "Cita Registrada", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
     public void filtrarCards() {
         String filtro = txtBuscar.getText().trim().toLowerCase();
         List<Cita> filtradas = new ArrayList<>();
 
         if (main.citas != null) {
             for (Cita c : main.citas) {
-                if (!"PENDIENTE".equalsIgnoreCase(c.getEstado())) continue; // Solo filtrar pendientes
+                if (!"PENDIENTE".equalsIgnoreCase(c.getEstado())) continue;
 
                 Propietario p = main.propietariosPanel.encontrarPropietarioPorDoc(c.getDocPropietario());
                 Mascota m = main.mascotasPanel.encontrarMascotaPorId(c.getIdMascota());
@@ -360,7 +350,8 @@ public class CitasPanel extends JPanel {
                 boolean matchMascota = (m != null && m.getNombre().toLowerCase().contains(filtro));
                 boolean matchPropietario = (p != null && p.getNombre().toLowerCase().contains(filtro));
                 boolean matchVeterinario = (v != null && v.getNombre().toLowerCase().contains(filtro));
-                boolean matchMotivo = c.getMotivo().getDescripcion().toLowerCase().contains(filtro);
+                boolean matchMotivo = (c.getMotivo()!=null && c.getMotivo().getDescripcion().toLowerCase().contains(filtro));
+
 
                 if (filtro.isEmpty() || matchMascota || matchPropietario || matchVeterinario || matchMotivo) {
                     filtradas.add(c);
@@ -370,12 +361,10 @@ public class CitasPanel extends JPanel {
         actualizarCards(filtradas);
     }
 
-    // Método estático para obtener el precio, llamado desde PagoPanel y PagosPanel
     public static int precioPorTipoServicio(TipoServicio motivo) {
         if (motivo == null) return 0;
         return motivo.getPrecio();
     }
-    // Sobrecarga para aceptar String, aunque es mejor usar el Enum directamente
     public static int precioPorTipoServicio(String motivoStr) {
         if (motivoStr == null || motivoStr.trim().isEmpty()) return 0;
         TipoServicio motivoEnum = TipoServicio.fromString(motivoStr);

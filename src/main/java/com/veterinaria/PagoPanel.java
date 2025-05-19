@@ -65,7 +65,7 @@ public class PagoPanel extends JPanel {
         gbcForm.anchor = GridBagConstraints.WEST;
         gbcForm.insets = new Insets(5, 8, 5, 8);
 
-        // Método de Pago
+        // Metodo de Pago
         gbcForm.gridx = 0; gbcForm.gridy = 0;
         panelFormularioPago.add(new JLabel("Método de Pago:"), gbcForm);
         gbcForm.gridx = 1; gbcForm.fill = GridBagConstraints.HORIZONTAL; gbcForm.weightx = 1.0;
@@ -109,7 +109,7 @@ public class PagoPanel extends JPanel {
         btnPagar = new JButton("Confirmar Pago");
         btnPagar.setFont(new Font("Arial", Font.BOLD, 14));
         btnPagar.setBackground(new Color(0, 128, 0)); // Verde
-        btnPagar.setForeground(Color.WHITE);
+        btnPagar.setForeground(Color.BLACK);
         btnPagar.setPreferredSize(new Dimension(160, 35));
         btnPagar.addActionListener(e -> procesarPago());
 

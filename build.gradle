@@ -1,6 +1,7 @@
 plugins {
     id 'java' // Plugin para compilar código Java
-    id 'application' // Plugin para crear aplicaciones ejecutables
+    id 'application'
+    id 'org.jetbrains.kotlin.jvm' // Plugin para crear aplicaciones ejecutables
 }
 
 group = 'com.veterinaria' // El GroupId que elegiste
@@ -25,6 +26,7 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0') // Bill of Materials para JUnit
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 application {
@@ -48,4 +50,7 @@ sourceSets {
             srcDirs = ["src/main/resources"]
         }
     }
+}
+kotlin {
+    jvmToolchain(23)
 }

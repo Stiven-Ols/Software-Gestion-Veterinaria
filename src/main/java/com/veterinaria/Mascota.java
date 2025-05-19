@@ -1,4 +1,4 @@
-package com.veterinaria; // Si usaste este paquete
+package com.veterinaria;
 
 import java.io.Serializable;
 
@@ -16,7 +16,7 @@ public class Mascota implements RegistrableEntidad, Serializable {
     // Constructor para cuando se crea una nueva mascota desde la UI
     public Mascota(String nombre, String especie, String raza, int edad, String propietarioDocumento) {
         // Para el ID, es mejor que el DAO lo genere o que se use UUID, pero para simplificar:
-        this.id = "Mascota-" + System.currentTimeMillis() + "-" + contadorIdTemporal++; // ID más único
+        this.id = "Mascota-" + System.currentTimeMillis() + "-" + contadorIdTemporal++; // ID más unico
         this.nombre = nombre;
         this.especie = especie;
         this.raza = raza;
@@ -46,8 +46,6 @@ public class Mascota implements RegistrableEntidad, Serializable {
 
     // Getters y Setters
     public String getId() { return id; }
-    // public void setId(String id) { this.id = id; } // El ID no debería cambiarse una vez asignado
-
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getEspecie() { return especie; }
     public void setEspecie(String especie) { this.especie = especie; }

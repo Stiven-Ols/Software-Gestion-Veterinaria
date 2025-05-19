@@ -41,9 +41,9 @@ public class VeterinariosPanel extends JPanel {
         });
 
         JButton btnAgregar = new JButton("Nuevo Veterinario");
-        btnAgregar.setFont(new Font("Arial", Font.BOLD, 13));
+        btnAgregar.setFont(new Font("Arial", Font.PLAIN, 13));
         btnAgregar.setBackground(new Color(60, 140, 200));
-        btnAgregar.setForeground(Color.WHITE);
+        btnAgregar.setForeground(Color.BLACK);
         btnAgregar.addActionListener(e -> dialogoAgregarVeterinario());
 
         JPanel panelBusquedaBotones = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -189,7 +189,7 @@ public class VeterinariosPanel extends JPanel {
 
         JPanel panelBotones = new JPanel();
         panelBotones.setOpaque(false);
-        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.Y_AXIS));
+        panelBotones.setLayout(new BoxLayout(panelBotones, BoxLayout.X_AXIS));
         panelBotones.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
         JButton btnEliminar = crearBotonIcono("/trash.png", "Eliminar Veterinario");
@@ -201,7 +201,7 @@ public class VeterinariosPanel extends JPanel {
         return card;
     }
 
-    // Método utilitario para crear botones con icono
+    // Metodo para crear botones con icono
     private JButton crearBotonIcono(String pathIcono, String tooltip) {
         JButton boton = new JButton();
         try {
